@@ -19,10 +19,12 @@ RUN npm run build
 
 FROM php:8.5-apache AS app
 
+# OPcache no está en la lista: desde PHP 8.5 viene incluido en PHP y no se instala aparte
+# (pedirlo rompe el build con "make: *** install-modules Error 1").
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libpq-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libwebp-dev libzip-dev libicu-dev unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install -j"$(nproc)" pdo_pgsql gd zip intl bcmath opcache \
+    && docker-php-ext-install -j"$(nproc)" pdo_pgsql gd zip intl bcmath \
     && rm -rf /var/lib/apt/lists/*
 
 # Apache: sirve /public, permite el .htaccess de Laravel y escucha en el puerto que da Render ($PORT)
