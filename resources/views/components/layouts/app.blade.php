@@ -49,7 +49,7 @@
         :class="{ 'translate-x-0': sidebarOpen }"
     >
         <div class="flex h-16 items-center justify-between gap-2 px-5">
-            <a href="{{ url('/') }}" class="flex items-center gap-2.5">
+            <a href="{{ route('erp.products.index') }}" class="flex items-center gap-2.5">
                 <span class="grid size-8 place-items-center rounded-lg bg-indigo-500 text-sm font-semibold text-white">B</span>
                 <span class="font-semibold text-white">{{ config('app.name') }}</span>
             </a>
@@ -108,8 +108,16 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <span class="hidden text-sm text-zinc-600 sm:block">Administrador</span>
-                <span class="grid size-8 place-items-center rounded-full bg-zinc-200 text-sm font-medium text-zinc-700">A</span>
+                <span class="hidden text-sm text-zinc-600 sm:block">{{ auth()->user()?->name }}</span>
+                <span class="grid size-8 place-items-center rounded-full bg-zinc-200 text-sm font-medium text-zinc-700">
+                    {{ mb_strtoupper(mb_substr(auth()->user()?->name ?? 'A', 0, 1)) }}
+                </span>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="icon-btn" title="Cerrar sesión">
+                        <x-icon name="logout" class="size-5" />
+                    </button>
+                </form>
             </div>
         </header>
 

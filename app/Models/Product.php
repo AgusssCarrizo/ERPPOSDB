@@ -141,9 +141,9 @@ class Product extends Model
         $query
             ->when($filters['q'] ?? null, function (Builder $query, string $term) {
                 $query->where(function (Builder $query) use ($term) {
-                    $query->where('name', 'like', "%{$term}%")
-                        ->orWhere('sku', 'like', "%{$term}%")
-                        ->orWhere('barcode', 'like', "%{$term}%");
+                    $query->whereLike('name', "%{$term}%")
+                        ->orWhereLike('sku', "%{$term}%")
+                        ->orWhereLike('barcode', "%{$term}%");
                 });
             })
             ->when($filters['category'] ?? null, fn (Builder $query, $id) => $query->where('category_id', $id))

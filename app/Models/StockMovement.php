@@ -54,7 +54,7 @@ class StockMovement extends Model
             ->when($filters['product'] ?? null, fn (Builder $query, $id) => $query->where('product_id', $id))
             ->when($filters['q'] ?? null, function (Builder $query, string $term) {
                 $query->whereHas('product', fn (Builder $query) => $query->withTrashed()
-                    ->where(fn (Builder $query) => $query->where('name', 'like', "%{$term}%")->orWhere('sku', 'like', "%{$term}%")));
+                    ->where(fn (Builder $query) => $query->whereLike('name', "%{$term}%")->orWhereLike('sku', "%{$term}%")));
             })
             ->when($filters['type'] ?? null, fn (Builder $query, $type) => $query->where('type', $type))
             ->when($filters['from'] ?? null, fn (Builder $query, $date) => $query->whereDate('created_at', '>=', $date))

@@ -41,7 +41,7 @@ class InventoryController extends Controller
             'stats' => [
                 'units' => (int) (clone $inStock)->sum('stock'),
                 'cost_value' => (float) (clone $inStock)->sum(DB::raw('cost_price * stock')),
-                'sale_value' => (float) (clone $inStock)->sum(DB::raw('sale_price * (1 + tax_rate / 100) * stock')),
+                'sale_value' => (float) (clone $inStock)->sum(DB::raw('sale_price * (1 + tax_rate / 100.0) * stock')),
                 'low_stock' => Product::lowStock()->count(),
                 'out_of_stock' => Product::outOfStock()->count(),
             ],

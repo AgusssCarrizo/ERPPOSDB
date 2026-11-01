@@ -30,7 +30,7 @@ class ProductController extends Controller
         $term = trim((string) $request->query('q'));
 
         $products = Product::availableInStore()
-            ->when($term !== '', fn (Builder $query) => $query->where('name', 'like', "%{$term}%"));
+            ->when($term !== '', fn (Builder $query) => $query->whereLike('name', "%{$term}%"));
 
         return view('shop.products.index', [
             'title' => $term !== '' ? "Resultados para “{$term}”" : 'Todos los productos',

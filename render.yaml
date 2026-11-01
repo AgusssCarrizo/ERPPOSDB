@@ -1,0 +1,57 @@
+# Render Blueprint: en Render → New → Blueprint → elegir este repo.
+# Las variables con `sync: false` (claves) se completan a mano en el panel de Render; nunca van al repo.
+services:
+  - type: web
+    name: decobazar
+    runtime: docker
+    plan: free
+    region: virginia          # cerca de la base de Neon (aws-us-east-1)
+    healthCheckPath: /up
+    envVars:
+      - key: APP_NAME
+        value: ERP Bazar
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        sync: false           # https://decobazar.onrender.com (o el dominio propio)
+      - key: APP_LOCALE
+        value: es
+      - key: APP_FAKER_LOCALE
+        value: es_AR
+
+      - key: LOG_CHANNEL
+        value: stderr         # los errores se ven en Render → Logs
+      - key: LOG_LEVEL
+        value: warning
+
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        sync: false           # connection string de Neon
+
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+
+      # Fotos en Cloudflare R2 (ver config/filesystems.php)
+      - key: PUBLIC_DISK
+        value: r2
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_PUBLIC_URL
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false

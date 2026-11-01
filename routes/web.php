@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Erp\CatalogController;
 use App\Http\Controllers\Erp\CategoryController;
 use App\Http\Controllers\Erp\InventoryController;
@@ -19,14 +20,28 @@ use App\Http\Controllers\Pos\SaleController;
 use App\Http\Controllers\Shop;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/erp/productos');
+Route::redirect('/', '/tienda');
+
+/*
+|--------------------------------------------------------------------------
+| Ingreso (ERP y punto de venta). No hay registro: los usuarios se crean con `php artisan erp:usuario`.
+|--------------------------------------------------------------------------
+*/
+Route::middleware('guest')->group(function () {
+    Route::get('ingresar', [LoginController::class, 'create'])->name('login');
+    Route::post('ingresar', [LoginController::class, 'store'])->middleware('throttle:5,1')->name('login.store');
+});
+Route::post('salir', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
 
 /*
 |--------------------------------------------------------------------------
 | ERP (backoffice)
 |--------------------------------------------------------------------------
 */
-Route::prefix('erp')->name('erp.')->group(function () {
+Route::prefix('erp')->name('erp.')->middleware('auth')->group(function () {
+    // Entrada al ERP: todavía no hay Panel, así que /erp lleva a Productos (sin sesión, primero al login).
+    Route::redirect('/', '/erp/productos')->name('home');
+
     // Antes del resource: si no, "importar" se tomaría como el {product} de productos/{product}.
     Route::get('productos/importar', [ProductImportController::class, 'create'])->name('products.import');
     Route::get('productos/importar/plantilla', [ProductImportController::class, 'template'])->name('products.import.template');
@@ -75,7 +90,7 @@ Route::prefix('erp')->name('erp.')->group(function () {
 | Punto de venta (mostrador)
 |--------------------------------------------------------------------------
 */
-Route::prefix('pos')->name('pos.')->group(function () {
+Route::prefix('pos')->name('pos.')->middleware('auth')->group(function () {
     Route::get('/', PosController::class)->name('index');
 
     Route::get('ventas', [SaleController::class, 'index'])->name('sales.index');

@@ -38,7 +38,20 @@ return [
             'report' => false,
         ],
 
-        'public' => [
+        // Fotos de productos, categorías y portada. En la PC van a storage/app/public;
+        // en producción (Render borra los archivos en cada deploy) van a Cloudflare R2: PUBLIC_DISK=r2.
+        'public' => env('PUBLIC_DISK') === 'r2' ? [
+            'driver' => 's3',
+            'key' => env('R2_ACCESS_KEY_ID'),
+            'secret' => env('R2_SECRET_ACCESS_KEY'),
+            'region' => 'auto',
+            'bucket' => env('R2_BUCKET'),
+            'endpoint' => env('R2_ENDPOINT'),          // https://<account-id>.r2.cloudflarestorage.com
+            'url' => env('R2_PUBLIC_URL'),             // https://pub-xxxx.r2.dev (acceso público del bucket)
+            'use_path_style_endpoint' => true,
+            'throw' => false,
+            'report' => false,
+        ] : [
             'driver' => 'local',
             'root' => storage_path('app/public'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',

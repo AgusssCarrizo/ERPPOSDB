@@ -12,7 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // En Render el https lo atiende su proxy: confiar en él para que las URLs salgan con https.
+        $middleware->trustProxies(at: '*');
+
+        // Si ya ingresó y vuelve a /ingresar, va directo al ERP.
+        $middleware->redirectUsersTo(fn () => route('erp.products.index'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

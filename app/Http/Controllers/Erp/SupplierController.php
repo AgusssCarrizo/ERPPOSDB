@@ -22,9 +22,9 @@ class SupplierController extends Controller
             ->withBalance()
             ->withMax('purchases as last_purchase_date', 'date')
             ->when($request->input('q'), fn ($query, $term) => $query->where(fn ($query) => $query
-                ->where('name', 'like', "%{$term}%")
-                ->orWhere('cuit', 'like', "%{$term}%")
-                ->orWhere('contact_name', 'like', "%{$term}%")))
+                ->whereLike('name', "%{$term}%")
+                ->orWhereLike('cuit', "%{$term}%")
+                ->orWhereLike('contact_name', "%{$term}%")))
             ->orderBy('name')
             ->get();
 

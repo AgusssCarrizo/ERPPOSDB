@@ -1,7 +1,7 @@
 # ERP Bazar — contexto del proyecto
 
 ERP + POS + E-commerce para **Deco Bazar** (@decobazar.db · WhatsApp +54 3388 458046), un bazar con **un solo local**.
-Laravel 13 · PHP 8.5 · SQLite · Blade + Tailwind 4 + Alpine.js · dompdf · GD. Windows (PowerShell + Git Bash). No es repo git todavía.
+Laravel 13 · PHP 8.5 · SQLite (local) / Postgres en Neon (producción) · Blade + Tailwind 4 + Alpine.js · dompdf · GD. Windows (PowerShell + Git Bash). Repo: github.com/AgusssCarrizo/ERPPOSDB (rama `main`).
 
 ## Cómo trabajar con el usuario
 
@@ -74,12 +74,20 @@ Rutas bajo `/erp` (nombres `erp.*`), URLs en español (`productos`, `categorias`
 - **`public/hot` viejo** (Vite que no se cerró bien) rompe `@fonts`/`@vite` y los tests ("Font alias not defined"): borrarlo junto con `public/fonts-manifest.dev.json`.
 - Fuentes por layout: ERP `@fonts('instrument-sans')`, tienda `@fonts(['playfair-display', 'jost'])` (definidas en `vite.config.js`).
 
+## Producción (Render + Neon + R2)
+
+- **App**: Render, servicio web Docker gratis (`Dockerfile`, `render.yaml`, `docker/start.sh` cachea config y corre `migrate --force` al arrancar). Se duerme a los 15 min sin uso. Sin shell en el plan gratis: los comandos de artisan contra producción se corren **desde la PC** con `DB_CONNECTION=pgsql DB_URL=<Neon>`.
+- **Base**: Neon, proyecto `decobazar` (`restless-violet-64103163`, aws-us-east-1), rama `main`; rama `tests` para correr la suite contra Postgres (`php -d max_execution_time=0 vendor/bin/phpunit` con `DB_CONNECTION=pgsql DB_URL=...`; tarda varios minutos por la latencia). CLI `neon` logueado. Datos locales copiados el 2026-10-29.
+- **Fotos**: Cloudflare R2 con `PUBLIC_DISK=r2` (+ `R2_*`); en la PC siguen en `storage/app/public`. Todo el código usa `Storage::disk('public')` → no leer fotos con rutas locales.
+- **Login**: `/ingresar` (ERP y POS con middleware `auth`; la tienda es pública; `/` → `/tienda`). No hay registro: usuarios con `php artisan erp:usuario email --name=`. Los tests entran logueados por defecto (`Tests\TestCase::$signedIn`).
+- Postgres: `like` distingue mayúsculas → usar `whereLike()`/`orWhereLike()`. Booleanos: true/false, no 0/1. Con `DB_URL` puesto, la conexión `sqlite` también lo toma.
+
 ## Comandos
 
 ```bash
 composer run dev                    # servidor + Vite
 php artisan migrate:fresh --seed    # base de ejemplo (borra todo, incluidos proveedores/compras cargados)
-php artisan test                    # 76 tests al 2026-10-29
+php artisan test                    # 81 tests al 2026-10-29
 vendor/bin/pint                     # estilo
 npm run build                       # assets
 ```
@@ -90,7 +98,7 @@ Hecho: Productos, Categorías, Inventario, Compras, Proveedores (con deuda), His
 Base real: 73 productos importados (Hudson, etc.) **sin categoría, sin foto y sin publicar** → la tienda arranca vacía hasta que se publiquen.
 Tienda pendiente: carrito + checkout → Pedidos en el ERP (decidir cobro: WhatsApp / Mercado Pago / transferencia, y envíos), páginas de políticas (envíos, cambios), newsletter, cuentas de clientes.
 Datos de prueba cargados a mano: producto 15 "Set de cubiertos x24" con foto demo, proveedor "Hudson SA" con compra C-000001 (precio pendiente de revisión). La categoría "Cocina" tiene como foto una historia vertical (se recorta mal en el catálogo; se le avisó).
-Ideas pendientes: anular compra, anular venta / devolución, Caja (apertura/cierre/arqueo), cobro integrado con Mercado Pago (QR/Point), recargo por cuotas, tienda online, sección Descuentos del catálogo, Marcas, Clientes, login (hoy no hay auth), Panel.
+Ideas pendientes: anular compra, anular venta / devolución, Caja (apertura/cierre/arqueo), cobro integrado con Mercado Pago (QR/Point), recargo por cuotas, sección Descuentos del catálogo, Marcas, Clientes, varios usuarios/roles, Panel.
 
 <laravel-boost-guidelines>
 === foundation rules ===
