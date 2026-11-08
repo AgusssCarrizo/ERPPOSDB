@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Erp\StoreSettingRequest;
 use App\Models\Product;
 use App\Models\StoreSetting;
+use App\Services\ImageStorage;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class StoreSettingController extends Controller
@@ -26,19 +26,16 @@ class StoreSettingController extends Controller
         ]);
     }
 
-    public function update(StoreSettingRequest $request): RedirectResponse
+    public function update(StoreSettingRequest $request, ImageStorage $images): RedirectResponse
     {
         $settings = StoreSetting::current();
         $data = $request->safe()->except(['hero_image', 'remove_hero_image']);
 
-        if ($request->hasFile('hero_image') || $request->boolean('remove_hero_image')) {
-            if ($settings->hero_image_path) {
-                Storage::disk('public')->delete($settings->hero_image_path);
-            }
-
-            $data['hero_image_path'] = $request->hasFile('hero_image')
-                ? $request->file('hero_image')->store('store', 'public')
-                : null;
+        if ($request->hasFile('hero_image')) {
+            $data['hero_image_path'] = $images->replace($request->file('hero_image'), 'store', 'hero_image', $settings->hero_image_path);
+        } elseif ($request->boolean('remove_hero_image')) {
+            $images->delete($settings->hero_image_path);
+            $data['hero_image_path'] = null;
         }
 
         $settings->update($data);

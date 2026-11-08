@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Erp;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Erp\CategoryRequest;
 use App\Models\Category;
+use App\Services\ImageStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -43,10 +44,10 @@ class CategoryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(CategoryRequest $request): RedirectResponse
+    public function store(CategoryRequest $request, ImageStorage $images): RedirectResponse
     {
         $data = $request->safe()->except('image');
-        $data['image_path'] = $request->file('image')->store('categories', 'public');
+        $data['image_path'] = $images->store($request->file('image'), 'categories', 'image');
 
         $category = Category::create($data);
 
@@ -68,16 +69,12 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(CategoryRequest $request, Category $category): RedirectResponse
+    public function update(CategoryRequest $request, Category $category, ImageStorage $images): RedirectResponse
     {
         $data = $request->safe()->except('image');
 
         if ($request->hasFile('image')) {
-            if ($category->image_path) {
-                Storage::disk('public')->delete($category->image_path);
-            }
-
-            $data['image_path'] = $request->file('image')->store('categories', 'public');
+            $data['image_path'] = $images->replace($request->file('image'), 'categories', 'image', $category->image_path);
         }
 
         $category->update($data);

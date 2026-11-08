@@ -7,10 +7,10 @@ use App\Http\Requests\Erp\ProductRequest;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\ImageStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProductController extends Controller
@@ -69,12 +69,12 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(ProductRequest $request): RedirectResponse
+    public function store(ProductRequest $request, ImageStorage $images): RedirectResponse
     {
         $data = $request->safe()->except(['image', 'remove_image']);
 
         if ($request->hasFile('image')) {
-            $data['image_path'] = $request->file('image')->store('products', 'public');
+            $data['image_path'] = $images->store($request->file('image'), 'products', 'image');
         }
 
         $product = Product::create($data);
@@ -111,18 +111,15 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(ProductRequest $request, Product $product): RedirectResponse
+    public function update(ProductRequest $request, Product $product, ImageStorage $images): RedirectResponse
     {
         $data = $request->safe()->except(['image', 'remove_image']);
 
-        if ($request->hasFile('image') || $request->boolean('remove_image')) {
-            if ($product->image_path) {
-                Storage::disk('public')->delete($product->image_path);
-            }
-
-            $data['image_path'] = $request->hasFile('image')
-                ? $request->file('image')->store('products', 'public')
-                : null;
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $images->replace($request->file('image'), 'products', 'image', $product->image_path);
+        } elseif ($request->boolean('remove_image')) {
+            $images->delete($product->image_path);
+            $data['image_path'] = null;
         }
 
         $product->update($data);

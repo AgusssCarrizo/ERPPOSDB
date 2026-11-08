@@ -4,9 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\ImageStorage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Tests\TestCase;
 
 class ProductManagementTest extends TestCase
@@ -81,6 +83,36 @@ class ProductManagementTest extends TestCase
         Storage::disk('public')->assertExists($product->image_path);
 
         $this->get(route('erp.products.show', $product))->assertOk()->assertSee('$ 1.815,00');
+    }
+
+    public function test_failed_image_upload_shows_an_error_and_keeps_the_old_photo(): void
+    {
+        $disk = Storage::fake('public');
+        $disk->put('products/vieja.jpg', 'foto');
+        $product = Product::factory()->create(['name' => 'Pava', 'image_path' => 'products/vieja.jpg']);
+
+        // Simula R2 caído: la subida devuelve false, como hace el disco con 'throw' => false.
+        $failingDisk = Mockery::mock($disk);
+        $failingDisk->shouldReceive('putFileAs')->andReturnFalse();
+        Storage::set('public', $failingDisk);
+
+        $this->from(route('erp.products.edit', $product))->put(route('erp.products.update', $product), [
+            'name' => 'Pava eléctrica',
+            'slug' => $product->slug,
+            'sku' => $product->sku,
+            'unit' => 'unidad',
+            'cost_price' => '200',
+            'sale_price' => '300',
+            'tax_rate' => '21',
+            'min_stock' => '1',
+            'image' => UploadedFile::fake()->image('nueva.jpg'),
+        ])->assertRedirect(route('erp.products.edit', $product))
+            ->assertSessionHasErrors(['image' => ImageStorage::FAILED_MESSAGE]);
+
+        $product->refresh();
+        $this->assertSame('Pava', $product->name);
+        $this->assertSame('products/vieja.jpg', $product->image_path);
+        $disk->assertExists('products/vieja.jpg');
     }
 
     public function test_validation_errors_are_in_spanish(): void
