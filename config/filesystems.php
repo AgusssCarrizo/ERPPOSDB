@@ -50,7 +50,7 @@ return [
             'url' => env('R2_PUBLIC_URL'),             // https://pub-xxxx.r2.dev (acceso público del bucket)
             'use_path_style_endpoint' => true,
             'throw' => false,
-            'report' => false,
+            'report' => true,                          // si R2 falla (claves, endpoint), el motivo queda en Render → Logs
         ] : [
             'driver' => 'local',
             'root' => storage_path('app/public'),
